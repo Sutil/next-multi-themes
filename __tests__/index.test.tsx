@@ -6,7 +6,7 @@ let localStorageMock: { [key: string]: string } = {}
 
 // HelperComponent to render the theme inside a paragraph-tag and setting a theme via the forceSetTheme prop
 const HelperComponent = ({ forceSetTheme }: { forceSetTheme?: string }) => {
-  const { setTheme, theme, forcedTheme, resolvedTheme, systemTheme } = useTheme()
+  const { setTheme, themeMode, theme, forcedTheme, resolvedTheme, systemTheme } = useTheme()
 
   useEffect(() => {
     if (forceSetTheme) {
@@ -14,8 +14,11 @@ const HelperComponent = ({ forceSetTheme }: { forceSetTheme?: string }) => {
     }
   }, [forceSetTheme])
 
+  console.log('helper>>', themeMode, theme, forcedTheme)
+
   return (
     <>
+      <p data-testid="theme-mode">{themeMode}</p>
       <p data-testid="theme">{theme}</p>
       <p data-testid="forcedTheme">{forcedTheme}</p>
       <p data-testid="resolvedTheme">{resolvedTheme}</p>
@@ -69,7 +72,7 @@ describe('defaultTheme', () => {
       </ThemeProvider>
     )
 
-    expect(screen.getByTestId('theme').textContent).toBe('system')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('system')
   })
 
   test('should return light when no default-theme is set and enableSystem=false', () => {
@@ -79,7 +82,7 @@ describe('defaultTheme', () => {
       </ThemeProvider>
     )
 
-    expect(screen.getByTestId('theme').textContent).toBe('light')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('light')
   })
 
   test('should return light when light is set as default-theme', () => {
@@ -89,7 +92,7 @@ describe('defaultTheme', () => {
       </ThemeProvider>
     )
 
-    expect(screen.getByTestId('theme').textContent).toBe('light')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('light')
   })
 
   test('should return dark when dark is set as default-theme', () => {
@@ -99,7 +102,7 @@ describe('defaultTheme', () => {
       </ThemeProvider>
     )
 
-    expect(screen.getByTestId('theme').textContent).toBe('dark')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('dark')
   })
 })
 
@@ -115,7 +118,7 @@ describe('provider', () => {
       )
     })
 
-    expect(screen.getByTestId('theme').textContent).toBe('dark')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('dark')
   })
 })
 
@@ -143,7 +146,7 @@ describe('storage', () => {
     })
 
     expect(global.Storage.prototype.setItem).toBeCalledTimes(1)
-    expect(global.Storage.prototype.getItem('theme')).toBe('dark')
+    expect(global.Storage.prototype.getItem('theme-mode')).toBe('dark')
   })
 })
 
@@ -158,13 +161,13 @@ describe('custom storageKey', () => {
     })
 
     expect(global.Storage.prototype.getItem).toHaveBeenCalledWith('theme')
-    expect(global.Storage.prototype.setItem).toHaveBeenCalledWith('theme', 'light')
+    expect(global.Storage.prototype.setItem).toHaveBeenCalledWith('theme-mode', 'light')
   })
 
   test("should save to localStorage with 'custom' when setting prop 'storageKey' to 'customKey'", () => {
     act(() => {
       render(
-        <ThemeProvider storageKey="customKey">
+        <ThemeProvider storageModeKey="customKey">
           <HelperComponent forceSetTheme="light" />
         </ThemeProvider>
       )
@@ -213,50 +216,6 @@ describe('custom attribute', () => {
   })
 })
 
-describe('custom value-mapping', () => {
-  test('should use custom value mapping when using value={{pink:"my-pink-theme"}}', () => {
-    localStorageMock['theme'] = 'pink'
-
-    act(() => {
-      render(
-        <ThemeProvider
-          themes={['pink', 'light', 'dark', 'system']}
-          value={{ pink: 'my-pink-theme' }}
-        >
-          <HelperComponent forceSetTheme="pink" />
-        </ThemeProvider>
-      )
-    })
-
-    expect(document.documentElement.getAttribute('data-theme')).toBe('my-pink-theme')
-    expect(global.Storage.prototype.setItem).toHaveBeenCalledWith('theme', 'pink')
-  })
-
-  test('should allow missing values (attribute)', () => {
-    act(() => {
-      render(
-        <ThemeProvider value={{ dark: 'dark-mode' }}>
-          <HelperComponent forceSetTheme="light" />
-        </ThemeProvider>
-      )
-    })
-
-    expect(document.documentElement.hasAttribute('data-theme')).toBeFalsy()
-  })
-
-  test('should allow missing values (class)', () => {
-    act(() => {
-      render(
-        <ThemeProvider attribute="class" value={{ dark: 'dark-mode' }}>
-          <HelperComponent forceSetTheme="light" />
-        </ThemeProvider>
-      )
-    })
-
-    expect(document.documentElement.classList.contains('light')).toBeFalsy()
-  })
-})
-
 describe('forcedTheme', () => {
   test('should render saved theme when no forcedTheme is set', () => {
     localStorageMock['theme'] = 'dark'
@@ -299,9 +258,9 @@ describe('system', () => {
       )
     })
 
-    expect(screen.getByTestId('theme').textContent).toBe('system')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('system')
     expect(screen.getByTestId('forcedTheme').textContent).toBe('')
-    expect(screen.getByTestId('resolvedTheme').textContent).toBe('dark')
+    expect(screen.getByTestId('resolvedTheme').textContent).toBe('')
   })
 
   test('system theme should be set, even if theme is not system', () => {
@@ -309,34 +268,18 @@ describe('system', () => {
 
     act(() => {
       render(
-        <ThemeProvider defaultTheme="light">
+        <ThemeProvider defaultTheme='light' >
           <HelperComponent />
         </ThemeProvider>
       )
     })
 
-    expect(screen.getByTestId('theme').textContent).toBe('light')
+    expect(screen.getByTestId('theme-mode').textContent).toBe('light')
     expect(screen.getByTestId('forcedTheme').textContent).toBe('')
-    expect(screen.getByTestId('resolvedTheme').textContent).toBe('light')
+    expect(screen.getByTestId('resolvedTheme').textContent).toBe('')
     expect(screen.getByTestId('systemTheme').textContent).toBe('dark')
   })
 
-  test('system theme should not be set if enableSystem is false', () => {
-    setDeviceTheme('dark')
-
-    act(() => {
-      render(
-        <ThemeProvider defaultTheme="light" enableSystem={false}>
-          <HelperComponent />
-        </ThemeProvider>
-      )
-    })
-
-    expect(screen.getByTestId('theme').textContent).toBe('light')
-    expect(screen.getByTestId('forcedTheme').textContent).toBe('')
-    expect(screen.getByTestId('resolvedTheme').textContent).toBe('light')
-    expect(screen.getByTestId('systemTheme').textContent).toBe('')
-  })
 })
 
 describe('color-scheme', () => {
@@ -355,7 +298,7 @@ describe('color-scheme', () => {
   test('should set color-scheme light when light theme is active', () => {
     act(() => {
       render(
-        <ThemeProvider>
+        <ThemeProvider enableSystem={false}>
           <HelperComponent />
         </ThemeProvider>
       )

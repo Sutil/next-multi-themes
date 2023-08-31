@@ -26,7 +26,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = props => {
   return <Theme {...props} />
 }
 
-const defaultThemes = ['light', 'dark'];
+const defaultThemeModes = ['light', 'dark'];
 
 const Theme: React.FC<ThemeProviderProps> = ({
   forcedTheme,
@@ -34,45 +34,59 @@ const Theme: React.FC<ThemeProviderProps> = ({
   enableSystem = true,
   enableColorScheme = true,
   storageKey = 'theme',
-  themes = defaultThemes,
+  storageModeKey = 'theme-mode',
+  themes = defaultThemeModes,
   defaultTheme = enableSystem ? 'system' : 'light',
   attribute = 'data-theme',
-  value,
   children,
   nonce
 }) => {
-  const [theme, setThemeState] = useState(() => getTheme(storageKey, defaultTheme))
+  const [themeMode, setThemeModeState] = useState(() => getTheme(storageModeKey, defaultTheme))
+  const [theme, setThemeState] = useState(() => getTheme(storageKey, null))
   const [resolvedTheme, setResolvedTheme] = useState(() => getTheme(storageKey))
-  const attrs = !value ? themes : Object.values(value)
+  const attrs = themes;
+  const d = document.documentElement;
 
-  const applyTheme = useCallback(theme => {
-    let resolved = theme
-    if (!resolved) return
+  function removePreviousTheme() {
+    if (attribute === 'class') {
+      d.classList.remove(...attrs);
+    } else {
+      d.removeAttribute(attribute);
+    }
+  }
+
+  function addNewTheme(themeMode: string, themeClass?: string | null) {
+    if (attribute === 'class') {
+      d.classList.add(themeMode);
+      if(themeClass) {
+        d.classList.add(themeClass);
+      }
+    } else {
+      const theme = themeClass ? `${themeMode} ${themeClass}` : themeMode;
+      
+      d.setAttribute(attribute, theme);
+    }
+  }
+
+  const applyTheme = useCallback((themeMode, extraClass?: string | null | undefined) => {
+    let resolvedMode = themeMode
+    if (!resolvedMode) return
 
     // If theme is system, resolve it before setting theme
-    if (theme === 'system' && enableSystem) {
-      resolved = getSystemTheme()
+    if (themeMode === 'system' && enableSystem) {
+      resolvedMode = getSystemTheme()
     }
 
-    const name = value ? value[resolved] : resolved
+    
     const enable = disableTransitionOnChange ? disableAnimation() : null
     const d = document.documentElement
 
-    if (attribute === 'class') {
-      d.classList.remove(...attrs)
-
-      if (name) d.classList.add(name)
-    } else {
-      if (name) {
-        d.setAttribute(attribute, name)
-      } else {
-        d.removeAttribute(attribute)
-      }
-    }
+    removePreviousTheme();
+    addNewTheme(resolvedMode, extraClass);
 
     if (enableColorScheme) {
       const fallback = colorSchemes.includes(defaultTheme) ? defaultTheme : null
-      const colorScheme = colorSchemes.includes(resolved) ? resolved : fallback
+      const colorScheme = colorSchemes.includes(resolvedMode) ? resolvedMode : fallback
       // @ts-ignore
       d.style.colorScheme = colorScheme
     }
@@ -81,12 +95,18 @@ const Theme: React.FC<ThemeProviderProps> = ({
   }, [])
 
   const setTheme = useCallback(
-    theme => {
-      setThemeState(theme)
+    (themeMode: string, extraClass?: string) => {
+      setThemeModeState(themeMode);
+      if(extraClass) {
+        setThemeState(extraClass);
+      }
 
       // Save to storage
       try {
-        localStorage.setItem(storageKey, theme)
+        localStorage.setItem(storageModeKey, themeMode)
+        if(extraClass) {
+          localStorage.setItem(storageKey, extraClass)
+        }
       } catch (e) {
         // Unsupported
       }
@@ -103,7 +123,7 @@ const Theme: React.FC<ThemeProviderProps> = ({
         applyTheme('system')
       }
     },
-    [theme, forcedTheme]
+    [theme, themeMode, forcedTheme]
   )
 
   // Always listen to System preference
@@ -135,11 +155,12 @@ const Theme: React.FC<ThemeProviderProps> = ({
 
   // Whenever theme or forcedTheme changes, apply it
   useEffect(() => {
-    applyTheme(forcedTheme ?? theme)
-  }, [forcedTheme, theme])
+    applyTheme(forcedTheme ?? themeMode, theme)
+  }, [forcedTheme, theme, themeMode])
 
   const providerValue = useMemo(() => ({
     theme,
+    themeMode,
     setTheme,
     forcedTheme,
     resolvedTheme: theme === 'system' ? resolvedTheme : theme,
@@ -158,10 +179,10 @@ const Theme: React.FC<ThemeProviderProps> = ({
           enableSystem,
           enableColorScheme,
           storageKey,
+          storageModeKey,
           themes,
           defaultTheme,
           attribute,
-          value,
           children,
           attrs,
           nonce
@@ -269,7 +290,7 @@ const ThemeScript = memo(
 )
 
 // Helpers
-const getTheme = (key: string, fallback?: string) => {
+const getTheme = (key: string, fallback?: string | null) => {
   if (isServer) return undefined
   let theme
   try {

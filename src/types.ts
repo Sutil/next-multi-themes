@@ -9,10 +9,12 @@ export interface UseThemeProps {
   forcedTheme?: string
   /** Update the theme */
   setTheme: (theme: string) => void
+  /** Active theme mode name */
+  themeMode?: string | null
   /** Active theme name */
-  theme?: string
+  theme?: string | null
   /** If `enableSystem` is true and the active theme is "system", this returns whether the system preference resolved to "dark" or "light". Otherwise, identical to `theme` */
-  resolvedTheme?: string
+  resolvedTheme?: string | null
   /** If enableSystem is true, returns the System theme preference ("dark" or "light"), regardless what the active theme is */
   systemTheme?: 'dark' | 'light'
 }
@@ -30,6 +32,8 @@ export interface ThemeProviderProps {
   enableColorScheme?: boolean
   /** Key used to store theme setting in localStorage */
   storageKey?: string
+  /** Key used to store theme mode (light, dark) setting in localStorage */
+  storageModeKey?: string
   /** Default theme name (for v0.0.12 and lower the default was light). If `enableSystem` is false, the default theme is light */
   defaultTheme?: string
   /** HTML attribute modified based on the active theme. Accepts `class` and `data-*` (meaning any data attribute, `data-mode`, `data-color`, etc.) */

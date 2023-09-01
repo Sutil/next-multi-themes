@@ -49,7 +49,8 @@ const Theme: React.FC<ThemeProviderProps> = ({
 
   function removePreviousTheme() {
     if (attribute === 'class') {
-      d.classList.remove(...attrs);
+      d.className = '';
+      debugger;
     } else {
       d.removeAttribute(attribute);
     }
@@ -99,6 +100,8 @@ const Theme: React.FC<ThemeProviderProps> = ({
       setThemeModeState(themeMode);
       if(extraClass) {
         setThemeState(extraClass);
+      } else {
+        setThemeState(null);   
       }
 
       // Save to storage
@@ -106,6 +109,8 @@ const Theme: React.FC<ThemeProviderProps> = ({
         localStorage.setItem(storageModeKey, themeMode)
         if(extraClass) {
           localStorage.setItem(storageKey, extraClass)
+        } else {
+          localStorage.removeItem(storageKey);
         }
       } catch (e) {
         // Unsupported

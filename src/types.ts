@@ -8,7 +8,7 @@ export interface UseThemeProps {
   /** Forced theme name for the current page */
   forcedTheme?: string
   /** Update the theme */
-  setTheme: (theme: string) => void
+  setTheme: (mode: 'light' | 'dark' | 'system', theme?: string) => void
   /** Active theme mode name */
   themeMode?: string | null
   /** Active theme name */

@@ -1,26 +1,48 @@
-# next-themes ![next-themes minzip package size](https://img.shields.io/bundlephobia/minzip/next-themes) [![Version](https://img.shields.io/npm/v/next-themes.svg?colorB=green)](https://www.npmjs.com/package/next-themes)
+# Apply multi themes on your Next.JS project.
+
+This is an extension of Next [/pacocoursey/next-themes repository](https://github.com/pacocoursey/next-themes)
+
+# Why?
+
+The [/pacocoursey/next-themes repository](https://github.com/pacocoursey/next-themes) give us the possibility to change set the theme to `light`, `dark`, and `system` by default.
+
+The library also provide a way to apply custom themes but when using it, it is not possible to set the correct `invert` options for `Tailwind`.
+
+So, this library is compatible with:
+- Next
+- Tailwind
+- Radix
+- Shadcn ui
+
+Which gives us a flexibility to set custom themes.
+
+# How does it work?
+
+Tailwind sometimes use the `dark:` flag to invert image colors.
+
+```
+dark:invert
+```
+
+So, when your theme has another name then not `dark` the invertion will not work.
+The solution is to use a `theme-mode` with a `theme-name`.
+
+```js
+setTheme('dark', 'gym');
+```
+
 
 An abstraction for themes in your Next.js app.
 
-- ✅ Perfect dark mode in 2 lines of code
-- ✅ System setting with prefers-color-scheme
-- ✅ Themed browser UI with color-scheme
-- ✅ Support for Next.js 13 `appDir`
-- ✅ No flash on load (both SSR and SSG)
-- ✅ Sync theme across tabs and windows
-- ✅ Disable flashing when changing themes
-- ✅ Force pages to specific themes
-- ✅ Class or data attribute selector
-- ✅ `useTheme` hook
 
-Check out the [Live Example](https://next-themes-example.vercel.app/) to try it for yourself.
+Check out the [Example](https://github.com/Sutil/next-many-themes-example) to try it for yourself.
 
 ## Install
 
 ```bash
-$ npm install next-themes
+$ npm install next-many-themes
 # or
-$ yarn add next-themes
+$ yarn add next-many-themes
 ```
 
 ## Use
